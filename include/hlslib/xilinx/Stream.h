@@ -173,18 +173,35 @@ class Stream : public _StreamBase {
 
 public:
 
-  Stream() : Stream("(unnamed)", capacityDefault) {
+  Stream() : Stream("(unnamed)") {
     #pragma HLS INLINE
   }
 
-  Stream(char const *const name) : Stream(name, capacityDefault) {
+  Stream(char const *const name)
+#ifdef HLSLIB_SYNTHESIS
+      : stream_(name) {
     #pragma HLS INLINE
+    #pragma HLS STREAM variable=stream_ depth=capacityDefault
+    if (storage == Storage::BRAM) {
+      #pragma HLS RESOURCE variable=stream_ core=FIFO_BRAM
+    } else if (storage == Storage::UltraRAM) {
+      #pragma HLS RESOURCE variable=stream_ core=XPM_MEMORY
+    } else if (storage == Storage::LUTRAM) {
+      #pragma HLS RESOURCE variable=stream_ core=FIFO_LUTRAM
+    } else if (storage == Storage::SRL) {
+      #pragma HLS RESOURCE variable=stream_ core=FIFO_SRL
+    }
   }
+#else
+      : name_(name), capacity_(capacityDefault) {}
+#endif // !HLSLIB_SYNTHESIS
 
+  [[deprecated("don't specify capacity by constructor")]]
   Stream(size_t capacity) : Stream("(unnamed)", capacity) {
     #pragma HLS INLINE
   }
 
+  [[deprecated("don't specify capacity by constructor")]]
   Stream(char const *const name, size_t capacity)
 #ifdef HLSLIB_SYNTHESIS
       : stream_(name) {
