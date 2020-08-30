@@ -470,15 +470,17 @@ public:
     return IsEmpty();
   }
 
-  bool IsEmpty() const {
 #ifdef HLSLIB_SYNTHESIS
+  bool IsEmpty() {
     #pragma HLS INLINE
     return stream_.empty();
+  }
 #else
+  bool IsEmpty() const {
     std::lock_guard<std::mutex> lock(mutex_);
     return queue_.size() == 0;
-#endif
   }
+#endif
 
   // Compatibility with Vivado HLS interface
   bool full() const {
